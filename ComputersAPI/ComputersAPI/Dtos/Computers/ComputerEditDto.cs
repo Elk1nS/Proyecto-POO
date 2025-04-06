@@ -1,6 +1,6 @@
 ﻿namespace ComputersAPI.Dtos.Computers
 {
-    public class ComputerEditDto
+    public class ComputerEditDto : ComputerCreateDto
     {
     }
 }

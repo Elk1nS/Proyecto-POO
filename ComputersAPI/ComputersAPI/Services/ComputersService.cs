@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ComputersAPI.Constants;
 using ComputersAPI.Database;
+using ComputersAPI.Database.Entities;
 using ComputersAPI.Dtos.Common;
 using ComputersAPI.Dtos.Computers;
 using ComputersAPI.Services.Interfaces;
@@ -54,6 +55,77 @@ namespace ComputersAPI.Services
                 Status = true,
                 Message = "Registro encontrado",
                 Data = _mapper.Map<ComputerDto>(computerEntity)
+            };
+        }
+
+        public async Task<ResponseDto<ComputerActionResponseDto>> CreateAsync(ComputerCreateDto dto)
+        {
+
+            var computerEntity = _mapper.Map<ComputerEntity>(dto);
+
+            _context.Computers.Add(computerEntity);
+            await _context.SaveChangesAsync();
+
+            return new ResponseDto<ComputerActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.CREATED,
+                Status = true,
+                Message = "Registro creado correctamente",
+                Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
+            };
+        }
+
+        public async Task<ResponseDto<ComputerActionResponseDto>> EditAsync(ComputerEditDto dto, Guid id)
+        {
+            var computerEntity = await _context.Computers.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (computerEntity is null)
+            {
+                return new ResponseDto<ComputerActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.NOT_FOUND,
+                    Status = false,
+                    Message = "Registro no encontrado",
+                };
+            }
+
+            _mapper.Map<ComputerEditDto, ComputerEntity>(dto, computerEntity);
+
+            _context.Computers.Update(computerEntity);
+            await _context.SaveChangesAsync();
+
+            return new ResponseDto<ComputerActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.Ok,
+                Status = true,
+                Message = "Registro editado correctamente",
+                Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
+            };
+        }
+
+        public async Task<ResponseDto<ComputerActionResponseDto>> DeleteAsync(Guid id)
+        {
+            var computerEntity = await _context.Computers.FirstOrDefaultAsync(x => x.Id == id);
+
+            if (computerEntity is null)
+            {
+                return new ResponseDto<ComputerActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.NOT_FOUND,
+                    Status = false,
+                    Message = "Registro no encontrado",
+                };
+            }
+
+            _context.Computers.Remove(computerEntity);
+            await _context.SaveChangesAsync();
+
+            return new ResponseDto<ComputerActionResponseDto>
+            {
+                StatusCode = HttpStatusCode.Ok,
+                Status = true,
+                Message = "Registro eliminado Correctamente",
+                Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
             };
         }
     }
