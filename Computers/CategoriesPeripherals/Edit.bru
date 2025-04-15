@@ -1,0 +1,17 @@
+meta {
+  name: Edit
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{PATH}}/categories_peripherals/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": null
+  }
+}

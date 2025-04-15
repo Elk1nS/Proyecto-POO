@@ -1,0 +1,24 @@
+meta {
+  name: Edit
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{PATH}}/computers/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "edi",
+    "brand": "tado",
+    "componentsIds": [
+      ""
+    ],
+    "peripheralsIds": [
+      ""
+    ]
+  }
+}

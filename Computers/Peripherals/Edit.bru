@@ -1,0 +1,19 @@
+meta {
+  name: Edit
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{PATH}}/peripherals/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "brand": null,
+    "model": null,
+    "price": 1
+  }
+}

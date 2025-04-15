@@ -11,5 +11,9 @@ namespace ComputersAPI.Dtos.Computers
 
         [Display(Name ="Marca")]
         public string Brand { get; set; }
+
+        //Lista de Componentes y Perifericos
+        public List<Guid> ComponentsIds { get; set; }
+        public List<Guid> PeripheralsIds { get; set; }
     }
 }
