@@ -1,0 +1,20 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{PATH}}/components
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "brand": "intel",
+    "model": "core i9",
+    "price": 500,
+    "categoryComponentId": "3b400ff2-f142-4125-998c-2599c3209e9a"
+  }
+}

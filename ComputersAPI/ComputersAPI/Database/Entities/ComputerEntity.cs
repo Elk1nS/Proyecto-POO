@@ -16,5 +16,10 @@ namespace ComputersAPI.Database.Entities
 
         [Column("brand")]
         public string Brand { get; set; }
+
+
+        public virtual ICollection<ComputerComponentEntity> ComputerComponents { get; set; }
+        public virtual ICollection<ComputerPeripheralEntity> ComputerPeripherals { get; set; }
+
     }
 }

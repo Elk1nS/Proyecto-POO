@@ -22,8 +22,17 @@ namespace ComputersAPI.Services
 
         public async Task<ResponseDto<List<ComputerDto>>> GetListAsync()
         {
-            var computersEntity = await _context.Computers.ToListAsync();
+            // Cargamos las computadoras con sus relaciones de componentes y periféricos usando Include
+            var computersEntity = await _context.Computers
+                .Include(c => c.ComputerComponents)       // Incluimos los componentes relacionados
+                .ThenInclude(cc => cc.Component)
+                .ThenInclude(c => c.CategoryComponent) // se incluye la categoría del componente
+                .Include(c => c.ComputerPeripherals)     // Incluimos los periféricos relacionados
+                .ThenInclude(cp => cp.Peripheral)
+                .ThenInclude(c => c.CategoryPeripheral)
+                .ToListAsync();
 
+            // Mapear las entidades a los DTOs
             var computersDto = _mapper.Map<List<ComputerDto>>(computersEntity);
 
             return new ResponseDto<List<ComputerDto>>
@@ -35,9 +44,18 @@ namespace ComputersAPI.Services
             };
         }
 
+      
+
         public async Task<ResponseDto<ComputerDto>> GetOneByIdAsync(Guid id)
         {
-            var computerEntity = await _context.Computers.FirstOrDefaultAsync(x => x.Id == id);
+            var computerEntity = await _context.Computers
+                .Include(c => c.ComputerComponents)
+                    .ThenInclude(cc => cc.Component)
+                    .ThenInclude(c => c.CategoryComponent)
+                .Include(c => c.ComputerPeripherals)
+                    .ThenInclude(cp => cp.Peripheral)
+                    .ThenInclude(c => c.CategoryPeripheral)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (computerEntity is null)
             {
@@ -58,12 +76,43 @@ namespace ComputersAPI.Services
             };
         }
 
+     
         public async Task<ResponseDto<ComputerActionResponseDto>> CreateAsync(ComputerCreateDto dto)
         {
-
             var computerEntity = _mapper.Map<ComputerEntity>(dto);
+            computerEntity.Id = Guid.NewGuid();
 
+            // Agregamos la computadora
             _context.Computers.Add(computerEntity);
+
+            // Relación con Componentes
+            if (dto.ComponentsIds != null && dto.ComponentsIds.Any())
+            {
+                foreach (var componentId in dto.ComponentsIds)
+                {
+                    _context.ComputerComponents.Add(new ComputerComponentEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        ComputerId = computerEntity.Id,
+                        ComponentId = componentId
+                    });
+                }
+            }
+
+            // Relación con Periféricos
+            if (dto.PeripheralsIds != null && dto.PeripheralsIds.Any())
+            {
+                foreach (var peripheralId in dto.PeripheralsIds)
+                {
+                    _context.ComputerPeripherals.Add(new ComputerPeripheralEntity
+                    {
+                        Id = Guid.NewGuid(),
+                        ComputerId = computerEntity.Id,
+                        PeripheralId = peripheralId
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             return new ResponseDto<ComputerActionResponseDto>
@@ -75,9 +124,13 @@ namespace ComputersAPI.Services
             };
         }
 
+     
         public async Task<ResponseDto<ComputerActionResponseDto>> EditAsync(ComputerEditDto dto, Guid id)
         {
-            var computerEntity = await _context.Computers.FirstOrDefaultAsync(x => x.Id == id);
+            var computerEntity = await _context.Computers
+                .Include(c => c.ComputerComponents) //  Incluye relaciones existentes
+                .Include(c => c.ComputerPeripherals) //  Incluye relaciones existentes
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (computerEntity is null)
             {
@@ -89,7 +142,28 @@ namespace ComputersAPI.Services
                 };
             }
 
+            //  Actualiza los datos básicos de la computadora
             _mapper.Map<ComputerEditDto, ComputerEntity>(dto, computerEntity);
+
+            //  Elimina relaciones actuales
+            _context.ComputerComponents.RemoveRange(computerEntity.ComputerComponents);
+            _context.ComputerPeripherals.RemoveRange(computerEntity.ComputerPeripherals);
+
+            //  Agrega nuevas relaciones con Componentes
+            computerEntity.ComputerComponents = dto.ComponentsIds.Select(id => new ComputerComponentEntity
+            {
+                Id = Guid.NewGuid(),
+                ComputerId = computerEntity.Id,
+                ComponentId = id
+            }).ToList();
+
+            //  Agrega nuevas relaciones con Periféricos
+            computerEntity.ComputerPeripherals = dto.PeripheralsIds.Select(id => new ComputerPeripheralEntity
+            {
+                Id = Guid.NewGuid(),
+                ComputerId = computerEntity.Id,
+                PeripheralId = id
+            }).ToList();
 
             _context.Computers.Update(computerEntity);
             await _context.SaveChangesAsync();
@@ -103,9 +177,14 @@ namespace ComputersAPI.Services
             };
         }
 
+       
+
         public async Task<ResponseDto<ComputerActionResponseDto>> DeleteAsync(Guid id)
         {
-            var computerEntity = await _context.Computers.FirstOrDefaultAsync(x => x.Id == id);
+            var computerEntity = await _context.Computers
+                .Include(c => c.ComputerComponents)
+                .Include(c => c.ComputerPeripherals)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (computerEntity is null)
             {
@@ -117,6 +196,11 @@ namespace ComputersAPI.Services
                 };
             }
 
+            // Eliminar relaciones
+            _context.ComputerComponents.RemoveRange(computerEntity.ComputerComponents);
+            _context.ComputerPeripherals.RemoveRange(computerEntity.ComputerPeripherals);
+
+            // Eliminar la computadora
             _context.Computers.Remove(computerEntity);
             await _context.SaveChangesAsync();
 
@@ -124,9 +208,11 @@ namespace ComputersAPI.Services
             {
                 StatusCode = HttpStatusCode.Ok,
                 Status = true,
-                Message = "Registro eliminado Correctamente",
+                Message = "Registro eliminado correctamente",
                 Data = _mapper.Map<ComputerActionResponseDto>(computerEntity)
             };
         }
+
+        
     }
 }

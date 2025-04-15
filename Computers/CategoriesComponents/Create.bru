@@ -1,0 +1,17 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{PATH}}/categories_components/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "Procesador"
+  }
+}
