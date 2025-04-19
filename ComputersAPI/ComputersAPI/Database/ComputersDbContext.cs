@@ -17,5 +17,7 @@ namespace ComputersAPI.Database
         public DbSet<ComputerComponentEntity> ComputerComponents { get; set; }
         public DbSet<ComputerPeripheralEntity> ComputerPeripherals { get; set; }
 
+       
+
     }
 }

@@ -2,6 +2,7 @@
 using ComputersAPI.Constants;
 using ComputersAPI.Database;
 using ComputersAPI.Database.Entities;
+using ComputersAPI.Dtos.CategoriesComponents;
 using ComputersAPI.Dtos.Common;
 using ComputersAPI.Dtos.Components;
 using ComputersAPI.Dtos.Computers;
@@ -40,7 +41,7 @@ namespace ComputersAPI.Services
         {
             var componentEntity = await _context.Components.Include(x => x.CategoryComponent).FirstOrDefaultAsync(x => x.Id == id);
 
-            if (componentEntity is null)
+            if (componentEntity == null)
             {
                 return new ResponseDto<ComponentDto>
                 {
@@ -78,7 +79,7 @@ namespace ComputersAPI.Services
 
         public async Task<ResponseDto<ComponentActionResponseDto>> EditAsync(ComponentEditDto dto, Guid id)
         {
-            var componentEntity = await _context.Components.FirstOrDefaultAsync(x => x.Id == id);
+            var componentEntity = await _context.Components.Include(x => x.CategoryComponent).FirstOrDefaultAsync(x => x.Id == id);
 
             if (componentEntity is null)
             {
@@ -115,6 +116,18 @@ namespace ComputersAPI.Services
                     StatusCode = HttpStatusCode.NOT_FOUND,
                     Status = false,
                     Message = "Registro no encontrado",
+                };
+            }
+
+            var componentInComputer = await _context.ComputerComponents.CountAsync(p => p.ComponentId == id); // ver si hay un componente asociado a una computadora
+
+            if (componentInComputer > 0)
+            {
+                return new ResponseDto<ComponentActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar el componente porque está asociado a una o más computadoras"
                 };
             }
 

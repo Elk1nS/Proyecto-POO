@@ -114,6 +114,18 @@ namespace ComputersAPI.Services
                 };
             }
 
+            var peripheralInComputer = await _context.ComputerPeripherals.CountAsync(p => p.PeripheralId == id); // ver si hay un periferico asociado a una computadora
+
+            if (peripheralInComputer > 0)
+            {
+                return new ResponseDto<PeripheralActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar el periferico porque está asociado a una o más computadoras"
+                };
+            }
+
             _context.Peripherals.Remove(peripheralEntity);
             await _context.SaveChangesAsync();
 

@@ -35,7 +35,13 @@ namespace ComputersAPI.Controllers
         {
             var response = await _peripheralsService.GetOneByIdAsync(id);
 
-            return StatusCode(response.StatusCode, response);
+            return StatusCode(response.StatusCode, new
+            {
+                response.Status,
+                response.Message,
+                response.Data
+
+            });
         }
 
         [HttpPost]

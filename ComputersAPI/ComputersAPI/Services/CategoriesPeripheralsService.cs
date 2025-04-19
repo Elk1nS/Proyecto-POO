@@ -2,6 +2,7 @@
 using ComputersAPI.Constants;
 using ComputersAPI.Database;
 using ComputersAPI.Database.Entities;
+using ComputersAPI.Dtos.CategoriesComponents;
 using ComputersAPI.Dtos.CategoriesPeripherals;
 using ComputersAPI.Dtos.Common;
 using ComputersAPI.Services.Interfaces;
@@ -110,6 +111,18 @@ namespace ComputersAPI.Services
                     StatusCode = HttpStatusCode.NOT_FOUND,
                     Status = false,
                     Message = "Registro no encontrado",
+                };
+            }
+
+            var peripheralInCategory = await _context.Peripherals.CountAsync(p => p.CategoryPeripheralId == id); // ver si en la categoría está un componente asociado
+
+            if (peripheralInCategory > 0)
+            {
+                return new ResponseDto<CategoryPeripheralActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar, existen datos relacionados"
                 };
             }
 

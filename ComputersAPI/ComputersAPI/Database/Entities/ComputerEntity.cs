@@ -17,6 +17,12 @@ namespace ComputersAPI.Database.Entities
         [Column("brand")]
         public string Brand { get; set; }
 
+        [Column("total_price")]
+        public decimal TotalPrice { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+
 
         public virtual ICollection<ComputerComponentEntity> ComputerComponents { get; set; }
         public virtual ICollection<ComputerPeripheralEntity> ComputerPeripherals { get; set; }

@@ -35,6 +35,13 @@ namespace ComputersAPI.Services
             // Mapear las entidades a los DTOs
             var computersDto = _mapper.Map<List<ComputerDto>>(computersEntity);
 
+            foreach (var computerDto in computersDto)
+            {
+                var totalComponents = computerDto.Components?.Sum(c => c.Price) ?? 0;
+                var totalPeripherals = computerDto.Peripherals?.Sum(p => p.Price) ?? 0;
+                computerDto.TotalPrice = totalComponents + totalPeripherals;
+            }
+
             return new ResponseDto<List<ComputerDto>>
             {
                 StatusCode = HttpStatusCode.Ok,
@@ -67,12 +74,20 @@ namespace ComputersAPI.Services
                 };
             }
 
+            // Mapear la entidad a DTO
+            var computerDto = _mapper.Map<ComputerDto>(computerEntity);
+
+            // Calcular TotalPrice
+            var totalComponents = computerDto.Components?.Sum(c => c.Price) ?? 0;
+            var totalPeripherals = computerDto.Peripherals?.Sum(p => p.Price) ?? 0;
+            computerDto.TotalPrice = totalComponents + totalPeripherals;
+
             return new ResponseDto<ComputerDto>
             {
                 StatusCode = HttpStatusCode.Ok,
                 Status = true,
                 Message = "Registro encontrado",
-                Data = _mapper.Map<ComputerDto>(computerEntity)
+                Data = computerDto 
             };
         }
 
@@ -81,6 +96,18 @@ namespace ComputersAPI.Services
         {
             var computerEntity = _mapper.Map<ComputerEntity>(dto);
             computerEntity.Id = Guid.NewGuid();
+            computerEntity.CreatedAt = DateTime.Now; // Fecha de creación
+
+            //  Calcular y asignar el total ANTES de guardar
+            var selectedComponents = await _context.Components
+                .Where(c => dto.ComponentsIds.Contains(c.Id))
+                .ToListAsync();
+
+            var selectedPeripherals = await _context.Peripherals
+                .Where(p => dto.PeripheralsIds.Contains(p.Id))
+                .ToListAsync();
+
+            computerEntity.TotalPrice = selectedComponents.Sum(c => c.Price) + selectedPeripherals.Sum(p => p.Price);
 
             // Agregamos la computadora
             _context.Computers.Add(computerEntity);
@@ -114,6 +141,23 @@ namespace ComputersAPI.Services
             }
 
             await _context.SaveChangesAsync();
+
+            //// Volvemos a consultar la computadora con sus relaciones
+            //var createdComputer = await _context.Computers
+            //    .Include(c => c.ComputerComponents)
+            //        .ThenInclude(cc => cc.Component)
+            //        .ThenInclude(c => c.CategoryComponent)
+            //    .Include(c => c.ComputerPeripherals)
+            //        .ThenInclude(cp => cp.Peripheral)
+            //        .ThenInclude(p => p.CategoryPeripheral)
+            //    .FirstOrDefaultAsync(x => x.Id == computerEntity.Id);
+
+            //var computerDto = _mapper.Map<ComputerDto>(createdComputer);
+
+            //// Calcular total
+            //var totalComponents = computerDto.Components?.Sum(c => c.Price) ?? 0;
+            //var totalPeripherals = computerDto.Peripherals?.Sum(p => p.Price) ?? 0;
+            //computerDto.TotalPrice = totalComponents + totalPeripherals;
 
             return new ResponseDto<ComputerActionResponseDto>
             {
