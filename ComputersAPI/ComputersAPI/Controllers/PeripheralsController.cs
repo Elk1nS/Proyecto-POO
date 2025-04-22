@@ -17,9 +17,9 @@ namespace ComputersAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ResponseDto<List<PeripheralDto>>>> GetList()
+        public async Task<ActionResult<ResponseDto<List<PeripheralDto>>>> GetList([FromQuery] Guid? categoryId)
         {
-            var response = await _peripheralsService.GetListAsync();
+            var response = await _peripheralsService.GetListAsync(categoryId);
 
             return StatusCode(response.StatusCode, new
             {
@@ -35,7 +35,13 @@ namespace ComputersAPI.Controllers
         {
             var response = await _peripheralsService.GetOneByIdAsync(id);
 
-            return StatusCode(response.StatusCode, response);
+            return StatusCode(response.StatusCode, new
+            {
+                response.Status,
+                response.Message,
+                response.Data
+
+            });
         }
 
         [HttpPost]

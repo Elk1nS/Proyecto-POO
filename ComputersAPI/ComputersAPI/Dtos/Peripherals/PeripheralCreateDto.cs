@@ -7,12 +7,12 @@ namespace ComputersAPI.Dtos.Peripherals
     {
         [Display(Name = "Marca")]
         [Required(ErrorMessage = "El campo {0} es requerido")]
-        [StringLength(15, MinimumLength = 2, ErrorMessage = "El campo {0} debe tener un minimo de {2} y un maximo de {1} caracteres")]
+        [StringLength(30, MinimumLength = 2, ErrorMessage = "El campo {0} debe tener un minimo de {2} y un maximo de {1} caracteres")]
         public string Brand { get; set; }
 
         [Display(Name = "Modelo")]
         [Required(ErrorMessage = "El campo {0} es requerido")]
-        [StringLength(20, MinimumLength = 3, ErrorMessage = "El campo {0} debe tener un minimo de {2} y un maximo de {1} caracteres")]
+        [StringLength(40, MinimumLength = 3, ErrorMessage = "El campo {0} debe tener un minimo de {2} y un maximo de {1} caracteres")]
         public string Model { get; set; }
 
         [Display(Name = "Precio")]

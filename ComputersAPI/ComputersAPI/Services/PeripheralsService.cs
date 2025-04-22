@@ -21,25 +21,48 @@ namespace ComputersAPI.Services
             _mapper = mapper;
         }
 
-        public async Task<ResponseDto<List<PeripheralDto>>> GetListAsync()
+        public async Task<ResponseDto<List<PeripheralDto>>> GetListAsync(Guid? categoryId = null)
         {
-            var peripheralsEntity = await _context.Peripherals.Include(p => p.CategoryPeripheral).ToListAsync();
+            var query = _context.Peripherals
+                .Include(c => c.CategoryPeripheral)
+                .AsQueryable();
 
-            var peripheralsDto = _mapper.Map<List<PeripheralDto>>(peripheralsEntity);
+            if (categoryId.HasValue)
+            {
+                query = query.Where(c => c.CategoryPeripheralId == categoryId.Value);
+            }
+
+            var peripheralsEntity = await query.ToListAsync();
+            var peripherlasDto = _mapper.Map<List<PeripheralDto>>(peripheralsEntity);
 
             return new ResponseDto<List<PeripheralDto>>
             {
                 StatusCode = HttpStatusCode.Ok,
                 Status = true,
-                Message = peripheralsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
-                Data = peripheralsDto
+                Message = peripheralsEntity.Count > 0 ? "Registros encontrados" : "No se encontraron registros",
+                Data = peripherlasDto
             };
         }
+
+        //public async Task<ResponseDto<List<PeripheralDto>>> GetListAsync(Guid? categoryId = null)
+        //{
+        //    var peripheralsEntity = await _context.Peripherals.Include(p => p.CategoryPeripheral).ToListAsync();
+
+        //    var peripheralsDto = _mapper.Map<List<PeripheralDto>>(peripheralsEntity);
+
+        //    return new ResponseDto<List<PeripheralDto>>
+        //    {
+        //        StatusCode = HttpStatusCode.Ok,
+        //        Status = true,
+        //        Message = peripheralsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
+        //        Data = peripheralsDto
+        //    };
+        //}
         public async Task<ResponseDto<PeripheralDto>> GetOneByIdAsync(Guid id)
         {
             var peripheralEntity = await _context.Peripherals.Include(x => x.CategoryPeripheral).FirstOrDefaultAsync(x => x.Id == id);
 
-            if (peripheralEntity is null)
+            if (peripheralEntity == null)
             {
                 return new ResponseDto<PeripheralDto>
                 {
@@ -59,6 +82,17 @@ namespace ComputersAPI.Services
         }
         public async Task<ResponseDto<PeripheralActionResponseDto>> CreateAsync(PeripheralCreateDto dto)
         {
+            // Validar que el periferico exista
+            var categoryExists = await _context.CategoriesPeripherals.AnyAsync(c => c.Id == dto.CategoryPeripheralId);
+            if (!categoryExists)
+            {
+                return new ResponseDto<PeripheralActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "El periferico no existe. Verifique el ID de categoria"
+                };
+            }
 
             var peripheralEntity = _mapper.Map<PeripheralEntity>(dto);
 
@@ -111,6 +145,18 @@ namespace ComputersAPI.Services
                     StatusCode = HttpStatusCode.NOT_FOUND,
                     Status = false,
                     Message = "Registro no encontrado",
+                };
+            }
+
+            var peripheralInComputer = await _context.ComputerPeripherals.CountAsync(p => p.PeripheralId == id); // ver si hay un periferico asociado a una computadora
+
+            if (peripheralInComputer > 0)
+            {
+                return new ResponseDto<PeripheralActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar el periferico porque esta asociado a una o mas computadoras"
                 };
             }
 

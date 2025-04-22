@@ -18,9 +18,9 @@ namespace ComputersAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ResponseDto<List<ComponentDto>>>> GetList()
+        public async Task<ActionResult<ResponseDto<List<ComponentDto>>>> GetList([FromQuery] Guid? categoryId)
         {
-            var response = await _componentsService.GetListAsync();
+            var response = await _componentsService.GetListAsync(categoryId);
 
             return StatusCode(response.StatusCode, new
             {
@@ -36,7 +36,12 @@ namespace ComputersAPI.Controllers
         {
             var response = await _componentsService.GetOneByIdAsync(id);
 
-            return StatusCode(response.StatusCode, response);
+            return StatusCode(response.StatusCode, new
+            {
+                response.Status,
+                response.Message,
+                response.Data
+            });
         }
 
         [HttpPost]

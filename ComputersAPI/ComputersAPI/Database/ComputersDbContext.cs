@@ -17,5 +17,24 @@ namespace ComputersAPI.Database
         public DbSet<ComputerComponentEntity> ComputerComponents { get; set; }
         public DbSet<ComputerPeripheralEntity> ComputerPeripherals { get; set; }
 
+
+        //Metodo para evitar que se eliminen los componentes y perifericos con las computadoras que estan asociados
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ComputerComponentEntity>()
+                .HasOne(cc => cc.Component)
+                .WithMany()
+                .HasForeignKey(cc => cc.ComponentId)
+                .OnDelete(DeleteBehavior.Restrict); //  Esto evita el borrado en cascada
+
+            modelBuilder.Entity<ComputerPeripheralEntity>()
+                .HasOne(cp => cp.Peripheral)
+                .WithMany()
+                .HasForeignKey(cp => cp.PeripheralId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            base.OnModelCreating(modelBuilder);
+        }
+
     }
 }

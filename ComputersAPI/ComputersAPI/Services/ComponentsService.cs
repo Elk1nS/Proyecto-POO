@@ -2,6 +2,7 @@
 using ComputersAPI.Constants;
 using ComputersAPI.Database;
 using ComputersAPI.Database.Entities;
+using ComputersAPI.Dtos.CategoriesComponents;
 using ComputersAPI.Dtos.Common;
 using ComputersAPI.Dtos.Components;
 using ComputersAPI.Dtos.Computers;
@@ -21,26 +22,50 @@ namespace ComputersAPI.Services
             _mapper = mapper;
         }
 
-        public async Task<ResponseDto<List<ComponentDto>>> GetListAsync()
+        public async Task<ResponseDto<List<ComponentDto>>> GetListAsync(Guid? categoryId = null)
         {
-            var componetsEntity = await _context.Components.Include(c => c.CategoryComponent).ToListAsync();
+            var query = _context.Components
+                .Include(c => c.CategoryComponent)
+                .AsQueryable();
 
-            var componentsDto = _mapper.Map<List<ComponentDto>>(componetsEntity);
+            if (categoryId.HasValue)
+            {
+                query = query.Where(c => c.CategoryComponentId == categoryId.Value);
+            }
+
+            var componentsEntity = await query.ToListAsync();
+            var componentsDto = _mapper.Map<List<ComponentDto>>(componentsEntity);
 
             return new ResponseDto<List<ComponentDto>>
             {
                 StatusCode = HttpStatusCode.Ok,
                 Status = true,
-                Message = componetsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
+                Message = componentsEntity.Count > 0 ? "Registros encontrados" : "No se encontraron registros",
                 Data = componentsDto
             };
         }
+
+
+        //public async Task<ResponseDto<List<ComponentDto>>> GetListAsync()
+        //{
+        //    var componetsEntity = await _context.Components.Include(c => c.CategoryComponent).ToListAsync();
+
+        //    var componentsDto = _mapper.Map<List<ComponentDto>>(componetsEntity);
+
+        //    return new ResponseDto<List<ComponentDto>>
+        //    {
+        //        StatusCode = HttpStatusCode.Ok,
+        //        Status = true,
+        //        Message = componetsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
+        //        Data = componentsDto
+        //    };
+        //}
 
         public async Task<ResponseDto<ComponentDto>> GetOneByIdAsync(Guid id)
         {
             var componentEntity = await _context.Components.Include(x => x.CategoryComponent).FirstOrDefaultAsync(x => x.Id == id);
 
-            if (componentEntity is null)
+            if (componentEntity == null)
             {
                 return new ResponseDto<ComponentDto>
                 {
@@ -61,6 +86,17 @@ namespace ComputersAPI.Services
 
         public async Task<ResponseDto<ComponentActionResponseDto>> CreateAsync(ComponentCreateDto dto)
         {
+            // Validar que la categoría exista
+            var categoryExists = await _context.CategoriesComponents.AnyAsync(c => c.Id == dto.CategoryComponentId);
+            if (!categoryExists)
+            {
+                return new ResponseDto<ComponentActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "La categoría no existe. Verifique el ID de categoria"
+                };
+            }
 
             var componentEntity = _mapper.Map<ComponentEntity>(dto);
 
@@ -78,7 +114,7 @@ namespace ComputersAPI.Services
 
         public async Task<ResponseDto<ComponentActionResponseDto>> EditAsync(ComponentEditDto dto, Guid id)
         {
-            var componentEntity = await _context.Components.FirstOrDefaultAsync(x => x.Id == id);
+            var componentEntity = await _context.Components.Include(x => x.CategoryComponent).FirstOrDefaultAsync(x => x.Id == id);
 
             if (componentEntity is null)
             {
@@ -115,6 +151,18 @@ namespace ComputersAPI.Services
                     StatusCode = HttpStatusCode.NOT_FOUND,
                     Status = false,
                     Message = "Registro no encontrado",
+                };
+            }
+
+            var componentInComputer = await _context.ComputerComponents.CountAsync(p => p.ComponentId == id); // ver si hay un componente asociado a una computadora
+
+            if (componentInComputer > 0)
+            {
+                return new ResponseDto<ComponentActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar el componente porque está asociado a una o más computadoras"
                 };
             }
 

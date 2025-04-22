@@ -113,6 +113,18 @@ namespace ComputersAPI.Services
                 };
             }
 
+            var componentInCategory = await _context.Components.CountAsync(p => p.CategoryComponentId == id); // ver si en la categoría está un componente asociado
+
+            if (componentInCategory > 0)
+            {
+                return new ResponseDto<CategoryComponentActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "No se puede eliminar, existen datos relacionados"
+                };
+            }
+
             _context.CategoriesComponents.Remove(categoryEntity);
             await _context.SaveChangesAsync();
 

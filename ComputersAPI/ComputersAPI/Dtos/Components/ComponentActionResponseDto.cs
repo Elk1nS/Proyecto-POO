@@ -9,6 +9,6 @@ namespace ComputersAPI.Dtos.Components
         public string Model { get; set; }
         public decimal Price { get; set; }
         public Guid CategoryComponentId { get; set; }
-        public CategoryComponentDto Category { get; set; }
+       // public CategoryComponentDto Category { get; set; }
     }
 }
