@@ -8,7 +8,7 @@ namespace ComputersAPI.Services.Interfaces
         Task<ResponseDto<ComponentActionResponseDto>> CreateAsync(ComponentCreateDto component);
         Task<ResponseDto<ComponentActionResponseDto>> DeleteAsync(Guid id);
         Task<ResponseDto<ComponentActionResponseDto>> EditAsync(ComponentEditDto dto, Guid id);
-        Task<ResponseDto<List<ComponentDto>>> GetListAsync();
+        Task<ResponseDto<List<ComponentDto>>> GetListAsync(Guid? categoryId = null);
         Task<ResponseDto<ComponentDto>> GetOneByIdAsync(Guid id);
     }
 }

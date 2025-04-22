@@ -22,20 +22,44 @@ namespace ComputersAPI.Services
             _mapper = mapper;
         }
 
-        public async Task<ResponseDto<List<ComponentDto>>> GetListAsync()
+        public async Task<ResponseDto<List<ComponentDto>>> GetListAsync(Guid? categoryId = null)
         {
-            var componetsEntity = await _context.Components.Include(c => c.CategoryComponent).ToListAsync();
+            var query = _context.Components
+                .Include(c => c.CategoryComponent)
+                .AsQueryable();
 
-            var componentsDto = _mapper.Map<List<ComponentDto>>(componetsEntity);
+            if (categoryId.HasValue)
+            {
+                query = query.Where(c => c.CategoryComponentId == categoryId.Value);
+            }
+
+            var componentsEntity = await query.ToListAsync();
+            var componentsDto = _mapper.Map<List<ComponentDto>>(componentsEntity);
 
             return new ResponseDto<List<ComponentDto>>
             {
                 StatusCode = HttpStatusCode.Ok,
                 Status = true,
-                Message = componetsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
+                Message = componentsEntity.Count > 0 ? "Registros encontrados" : "No se encontraron registros",
                 Data = componentsDto
             };
         }
+
+
+        //public async Task<ResponseDto<List<ComponentDto>>> GetListAsync()
+        //{
+        //    var componetsEntity = await _context.Components.Include(c => c.CategoryComponent).ToListAsync();
+
+        //    var componentsDto = _mapper.Map<List<ComponentDto>>(componetsEntity);
+
+        //    return new ResponseDto<List<ComponentDto>>
+        //    {
+        //        StatusCode = HttpStatusCode.Ok,
+        //        Status = true,
+        //        Message = componetsEntity.Count() > 0 ? "Registros encontrados" : "No se encontraron registros",
+        //        Data = componentsDto
+        //    };
+        //}
 
         public async Task<ResponseDto<ComponentDto>> GetOneByIdAsync(Guid id)
         {
@@ -62,6 +86,17 @@ namespace ComputersAPI.Services
 
         public async Task<ResponseDto<ComponentActionResponseDto>> CreateAsync(ComponentCreateDto dto)
         {
+            // Validar que la categoría exista
+            var categoryExists = await _context.CategoriesComponents.AnyAsync(c => c.Id == dto.CategoryComponentId);
+            if (!categoryExists)
+            {
+                return new ResponseDto<ComponentActionResponseDto>
+                {
+                    StatusCode = HttpStatusCode.BAD_REQUEST,
+                    Status = false,
+                    Message = "La categoría no existe. Verifique el ID de categoria"
+                };
+            }
 
             var componentEntity = _mapper.Map<ComponentEntity>(dto);
 

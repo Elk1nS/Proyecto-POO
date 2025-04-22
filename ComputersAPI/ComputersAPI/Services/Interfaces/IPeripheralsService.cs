@@ -8,7 +8,7 @@ namespace ComputersAPI.Services.Interfaces
         Task<ResponseDto<PeripheralActionResponseDto>> CreateAsync(PeripheralCreateDto peripheral);
         Task<ResponseDto<PeripheralActionResponseDto>> DeleteAsync(Guid id);
         Task<ResponseDto<PeripheralActionResponseDto>> EditAsync(PeripheralEditDto dto, Guid id);
-        Task<ResponseDto<List<PeripheralDto>>> GetListAsync();
+        Task<ResponseDto<List<PeripheralDto>>> GetListAsync(Guid? categoryId = null);
         Task<ResponseDto<PeripheralDto>> GetOneByIdAsync(Guid id);
     }
 }
